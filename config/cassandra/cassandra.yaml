@@ -1,0 +1,82 @@
+# Cluster name
+cluster_name: FinancialCluster
+
+# Number of tokens per node
+num_tokens: 256
+
+# Partitioner
+partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+
+# Hinted handoff settings
+hinted_handoff_enabled: true
+max_hint_window_in_ms: 10800000 # 3 hours
+hinted_handoff_throttle_in_kb: 1024
+
+# Authentication and authorization
+authenticator: AllowAllAuthenticator
+authorizer: AllowAllAuthorizer
+
+# Data file directories
+data_file_directories:
+  - /var/lib/cassandra/data
+
+# Commit log directory
+commitlog_directory: /var/lib/cassandra/commitlog
+
+# Saved caches directory
+saved_caches_directory: /var/lib/cassandra/saved_caches
+
+# Endpoint snitch
+endpoint_snitch: GossipingPropertyFileSnitch
+
+# Inter-node communication
+internode_compression: dc
+
+# Read and write consistency
+read_request_timeout_in_ms: 5000
+write_request_timeout_in_ms: 2000
+
+# Compaction settings
+compaction_throughput_mb_per_sec: 64
+concurrent_compactors: 4
+
+# Memtable settings
+memtable_allocation_type: heap_buffers
+memtable_flush_writers: 2
+
+# Cache settings
+key_cache_size_in_mb: 100
+row_cache_size_in_mb: 0
+
+# Performance tuning
+concurrent_reads: 32
+concurrent_writes: 32
+concurrent_counter_writes: 32
+
+# Commit log settings
+commitlog_sync: periodic
+commitlog_sync_period_in_ms: 10000
+
+# Network settings
+listen_address: 172.18.0.4
+broadcast_address: 172.18.0.4
+rpc_address: 0.0.0.0
+broadcast_rpc_address: 172.18.0.4
+
+# Native transport
+native_transport_port: 9042
+native_transport_max_threads: 128
+native_transport_max_frame_size_in_mb: 256
+
+# Garbage collection settings
+gc_warn_threshold_in_ms: 1000
+
+# Enable experimental features if needed
+enable_materialized_views: true
+enable_user_defined_functions: true
+
+# Seed provider
+seed_provider:
+    - class_name: org.apache.cassandra.locator.SimpleSeedProvider
+      parameters:
+          - seeds: "cassandra-node1"

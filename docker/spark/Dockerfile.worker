@@ -1,0 +1,63 @@
+# Use official Spark image as base
+FROM bitnamilegacy/spark:3.5.1
+
+USER root
+
+# Install additional dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        python3-pip \
+        wget \
+        curl \
+        procps \
+        net-tools && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for data processing
+RUN pip3 install --break-system-packages --no-cache-dir \
+    pyspark==3.5.0 \
+    cassandra-driver \
+    pandas \
+    numpy \
+    pyarrow \
+    fastparquet \
+    yfinance==0.2.32 \
+    kafka-python==2.0.2
+
+# Download Cassandra and Kafka connectors for Spark
+RUN wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/com/datastax/spark/spark-cassandra-connector-assembly_2.12/3.5.0/spark-cassandra-connector-assembly_2.12-3.5.0.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/com/datastax/oss/java-driver-core/4.15.0/java-driver-core-4.15.0.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.1/spark-sql-kafka-0-10_2.12-3.5.1.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.1/spark-token-provider-kafka-0-10_2.12-3.5.1.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.4.1/kafka-clients-3.4.1.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://repo1.maven.org/maven2/com/typesafe/config/1.4.2/config-1.4.2.jar && \
+    wget -P /opt/bitnami/spark/jars/ \
+    https://jdbc.postgresql.org/download/postgresql-42.6.0.jar
+
+# Create directories for logs and data
+RUN mkdir -p /opt/spark/logs /opt/spark/work /opt/spark/data && \
+    chown -R 1001:1001 /opt/spark
+
+# Ensure bitnami user can write to its own config dir
+RUN chown -R 1001:1001 /opt/bitnami/spark/conf/
+
+# Expose Spark worker ports
+# 8081: Spark worker web UI
+EXPOSE 8081
+
+USER 1001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8081 || exit 1
+
+WORKDIR /opt/bitnami/spark

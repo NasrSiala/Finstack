@@ -1,0 +1,323 @@
+
+
+services:
+  # Cassandra Cluster
+  cassandra-node1:
+    build:
+      context: ./docker/cassandra
+      dockerfile: Dockerfile
+    container_name: cassandra-node1
+    hostname: cassandra-node1
+    networks:
+      - financial-net
+    ports:
+      - "9042:9042"
+      - "7199:7199"
+    volumes:
+      - cassandra-data-1:/var/lib/cassandra
+      - ./config/cassandra/cassandra.yaml:/etc/cassandra/cassandra.yaml
+      - ./logs/cassandra:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_CLUSTER_NAME=FinancialCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=400M
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep UN"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  cassandra-node2:
+    build:
+      context: ./docker/cassandra
+      dockerfile: Dockerfile
+    container_name: cassandra-node2
+    hostname: cassandra-node2
+    networks:
+      - financial-net
+    ports:
+      - "9043:9042"
+    volumes:
+      - cassandra-data-2:/var/lib/cassandra
+      - ./config/cassandra/cassandra.yaml:/etc/cassandra/cassandra.yaml
+      - ./logs/cassandra:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_CLUSTER_NAME=FinancialCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=400M
+    depends_on:
+      cassandra-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep UN"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    restart: unless-stopped
+
+  cassandra-node3:
+    build:
+      context: ./docker/cassandra
+      dockerfile: Dockerfile
+    container_name: cassandra-node3
+    hostname: cassandra-node3
+    networks:
+      - financial-net
+    ports:
+      - "9044:9042"
+    volumes:
+      - cassandra-data-3:/var/lib/cassandra
+      - ./config/cassandra/cassandra.yaml:/etc/cassandra/cassandra.yaml
+      - ./logs/cassandra:/var/log/cassandra
+    environment:
+      - CASSANDRA_SEEDS=cassandra-node1
+      - CASSANDRA_CLUSTER_NAME=FinancialCluster
+      - CASSANDRA_DC=dc1
+      - CASSANDRA_RACK=rack1
+      - MAX_HEAP_SIZE=2G
+      - HEAP_NEWSIZE=400M
+    depends_on:
+      cassandra-node2:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep UN"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  # Spark Cluster
+  spark-master:
+    build:
+      context: ./
+      dockerfile: docker/spark/Dockerfile.master
+    container_name: spark-master
+    hostname: spark-master
+    networks:
+      - financial-net
+    ports:
+      - "8080:8080" # Web UI
+      - "7077:7077" # Master port
+    volumes:
+      - ./data:/opt/spark/data-external
+      - ./scripts:/opt/spark/scripts
+      - ./logs/spark:/opt/bitnami/spark/logs
+      - ./config/spark/spark-env.sh:/opt/bitnami/spark/conf/spark-env.sh
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+    dns:
+      - 8.8.8.8
+    depends_on:
+      cassandra-node3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  spark-worker-1:
+    build:
+      context: ./
+      dockerfile: docker/spark/Dockerfile.worker
+    container_name: spark-worker-1
+    hostname: spark-worker-1
+    networks:
+      - financial-net
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./data:/opt/spark/data-external
+      - ./scripts:/opt/spark/scripts
+      - ./logs/spark:/opt/bitnami/spark/logs
+      - ./config/spark/spark-env.sh:/opt/bitnami/spark/conf/spark-env.sh
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+    dns:
+      - 8.8.8.8
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  spark-worker-2:
+    build:
+      context: ./
+      dockerfile: docker/spark/Dockerfile.worker
+    container_name: spark-worker-2
+    hostname: spark-worker-2
+    networks:
+      - financial-net
+    ports:
+      - "8082:8081"
+    volumes:
+      - ./data:/opt/spark/data-external
+      - ./scripts:/opt/spark/scripts
+      - ./logs/spark:/opt/bitnami/spark/logs
+      - ./config/spark/spark-env.sh:/opt/bitnami/spark/conf/spark-env.sh
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+    dns:
+      - 8.8.8.8
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  spark-worker-3:
+    build:
+      context: ./
+      dockerfile: docker/spark/Dockerfile.worker
+    container_name: spark-worker-3
+    hostname: spark-worker-3
+    networks:
+      - financial-net
+    ports:
+      - "8083:8081"
+    volumes:
+      - ./data:/opt/spark/data-external
+      - ./scripts:/opt/spark/scripts
+      - ./logs/spark:/opt/bitnami/spark/logs
+      - ./config/spark/spark-env.sh:/opt/bitnami/spark/conf/spark-env.sh
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=4G
+      - SPARK_WORKER_CORES=2
+    dns:
+      - 8.8.8.8
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Zookeeper and Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    hostname: zookeeper
+    networks:
+      - financial-net
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  kafka:
+    build:
+      context: ./docker/kafka
+      dockerfile: Dockerfile
+    container_name: kafka
+    hostname: kafka
+    networks:
+      - financial-net
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+      - ./logs/kafka:/var/log/kafka
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # FinceptTerminal Analytics Interface (Native Desktop App via X11)
+  fincept-terminal:
+    build:
+      context: ./docker/fincept
+      dockerfile: Dockerfile
+    container_name: fincept-terminal
+    hostname: fincept
+    networks:
+      - financial-net
+    environment:
+      - DISPLAY=${DISPLAY:-host.docker.internal:0} # Ensure X Server (VcXsrv/Xming) is running on Windows
+      - QT_X11_NO_MITSHM=1
+      # Routing data pipelines
+      - FINCEPT_KAFKA_BROKER=kafka:9092
+      - FINCEPT_CASSANDRA_HOST=cassandra-node1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data/processed:/app/data
+      - ./logs/fincept:/app/logs
+    depends_on:
+      spark-master:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      cassandra-node1:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # PostgreSQL - Gold Layer (Serving layer for Power BI)
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-gold
+    hostname: postgres-gold
+    networks:
+      - financial-net
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=financial_gold
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=financial_secret
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d financial_gold"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  financial-net:
+    driver: bridge
+
+volumes:
+  cassandra-data-1:
+  cassandra-data-2:
+  cassandra-data-3:
+  kafka-data:
+  zookeeper-data:
+  zookeeper-logs:
+  postgres-data:

@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv
+venv/
+ENV/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Data and Logs
+logs/
+data/processed/
+data/raw/
+*.parquet
+*.csv
+*.json
+!data/README.md
+
+# Spark/Hadoop
+derby.log
+metastore_db/
+spark-warehouse/
+checkpoint/
+*.lzo
+*.crc
+
+# Docker
+.dockerignore
+# Do not ignore docker-compose.yml as it is part of the infra
+# but you might want to ignore local overrides
+docker-compose.override.yml
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Misc
+*.tmp
+*.bak
+*.old
+
+docs/
