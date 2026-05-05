@@ -1,6 +1,6 @@
 # Fincept: End-to-End Big Data Financial Pipeline
 
-Fincept is a high-performance, containerized big data pipeline designed to ingest, process, and visualize real-time financial market data. It implements a **Medallion Architecture** to ensure data quality and scalability, transforming raw API data into production-ready financial insights.
+Fincept is a high-performance, containerized big data pipeline designed to ingest, process, and visualize real time financial market data. It implements a **Medallion Architecture** to ensure data quality and scalability, transforming raw API data into production-ready financial insights.
 
 ---
 
