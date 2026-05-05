@@ -91,9 +91,17 @@ The project spawns 10 containers working in harmony:
 | **`spark-master`** | Orchestrator | Manages the Spark cluster, schedules tasks, and provides the Web UI (Port 8080). |
 | **`spark-worker[1-3]`** | Muscle | Executes Spark tasks. Each worker is allocated 4GB RAM and 2 Cores. |
 | **`postgres-gold`** | Gold Storage | Relational database for final BI consumption. Stores structured daily summaries. |
-| **`fincept-terminal`** | Frontend | A containerized UI that connects to Cassandra/Kafka. Uses X11 forwarding to appear on your host machine. |
+| **`fincept-terminal`** | Frontend | An open-source analytics terminal (C++/Qt) that connects to Cassandra/Kafka. Source code available on [GitHub](https://github.com/your-username/fincept-terminal). |
 
 ---
+
+## 🖥️ Fincept Terminal
+
+The **Fincept Terminal** is the primary visualization layer for this pipeline. It is developed as a separate open-source project and integrated here via Docker.
+
+*   **Repository**: [github.com/your-username/fincept-terminal](https://github.com/your-username/fincept-terminal)
+*   **Key Features**: Real-time candle charts, Order book depth, and Technical Indicator overlays.
+*   **Integration**: Connects to this pipeline's Kafka and Cassandra instances for sub-millisecond data updates.
 
 ## 🏗 Infrastructure Details
 
